@@ -150,7 +150,10 @@ public class Reader {
 				deviceStat.setTime(time);
 				deviceStat.setRamUsage(Integer.parseInt(line.split(":")[3].trim()));
 				line = br.readLine();
-				deviceStat.setCpuUsage(Integer.parseInt(line.split(":")[3].trim()));
+				int cpu = Integer.parseInt(line.split(":")[3].trim());
+				line = br.readLine();
+				cpu += Integer.parseInt(line.split(":")[3].trim());
+				deviceStat.setCpuUsage(cpu/2);
 				al.add(deviceStat);
 				}
 		}

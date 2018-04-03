@@ -88,8 +88,14 @@ public class Main {
 
 	private static void dbDelete(String[] args) {
 		System.out.println("Are you sure you want to delete "+args[1]+"?");
-		if(sc.nextLine().toUpperCase().matches("Y"))
-		    dao.delete(args);
+		if(sc.nextLine().toUpperCase().matches("Y")) {
+			if (args[1].length()==6) {
+				ArrayList<String> al = dao.getBatchIDs(args[1]);
+				Iterator<String> it = al.iterator();
+				while (it.hasNext()) dao.delete(it.next());
+			}
+			else dao.delete(args[1]);
+		}
 		sc.close();
 	}
 	private static void dbInsert(String[] args) {

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
@@ -255,13 +256,13 @@ public class DAO {
 		finally {try {con.close();} catch (SQLException e) {e.printStackTrace();}}
 		return rows;
 	}
-	public void delete(String[] args) {
+	public void delete(String arg) {
 		Connection con = getConnection();
 		try {
 			Statement stmt = con.createStatement();
 			for (String table:tables)
-				stmt.execute("DELETE FROM "+table+" WHERE BATCH_ID="+args[1]);
-			System.out.println("Deleteted "+args[1]);
+				stmt.execute("DELETE FROM "+table+" WHERE BATCH_ID="+arg);
+			System.out.println("Deleteted "+arg);
 		} catch (SQLException e) {e.printStackTrace();}
 		finally {try {con.close();} catch (SQLException e) {e.printStackTrace();}}
 	}
@@ -302,6 +303,19 @@ public class DAO {
 		} catch (SQLException e) {e.printStackTrace();}
 		finally {try {con.close();} catch (SQLException e) {e.printStackTrace();}}
 		return rows;
+	}
+	public ArrayList<String> getBatchIDs(String string) {
+		ArrayList<String> al = new ArrayList<>();
+		Connection con = getConnection();
+		try {
+			PreparedStatement stmt = con.prepareStatement("SELECT BATCH_ID FROM sessionMap WHERE toUse like "+string);
+			ResultSet rs = stmt.executeQuery();
+			while(rs.next()) {
+				al.add(rs.getString(1));
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+		finally {try {con.close();} catch (SQLException e) {e.printStackTrace();}}
+		return al;
 	}
 
 }
