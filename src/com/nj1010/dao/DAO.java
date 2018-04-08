@@ -56,7 +56,7 @@ public class DAO {
 			stmt.execute("CREATE TABLE PortStat (BATCH_ID BIGINT ,time TIME, Name VARCHAR(20), PortNo INTEGER, OutPackets BIGINT)");
 			stmt.execute("CREATE TABLE Iperf3Stat (BATCH_ID BIGINT ,time TIME, transfer INTEGER, bandwidth BIGINT,pair VARCHAR(20))");
 			stmt.execute("CREATE TABLE pingStat (BATCH_ID BIGINT ,time TIME, min INTEGER, avg INTEGER, max INTEGER)");
-			stmt.execute("CREATE TABLE batch_run (BATCH_ID BIGINT ,rDevStats INTEGER,rContrStats INTEGER, rPortStats INTEGER, rIperf3Stats INTEGER, coefficient INTEGER, dropped INTEGER, blocked INTEGER)");
+			stmt.execute("CREATE TABLE batch_run (BATCH_ID BIGINT ,rDevStats INTEGER,rContrStats INTEGER, rPortStats INTEGER, rIperf3Stats INTEGER, rPingRepStats INTEGER, coefficient INTEGER, dropped INTEGER, blocked INTEGER)");
 			stmt.execute("CREATE TABLE pingRepStat (BATCH_ID BIGINT ,time TIME, rtt INTEGER, pingPair VARCHAR(20))");
 			stmt.execute("CREATE TABLE coefficients (BATCH_ID BIGINT, serialNumber INTEGER, coeff NUMERIC(20,18))");
 			stmt.execute("CREATE TABLE sessionMap (BATCH_ID BIGINT, session VARCHAR(20), toUse VARCHAR(20), coeff NUMERIC(20,18), slaDel INTEGER,slaBW INTEGER, bandwidth INTEGER);");
@@ -67,12 +67,12 @@ public class DAO {
 		Connection con = getConnection();
 		try {
 			Statement stmt=con.createStatement();
-			if (new DBProperties().getDbserver().matches("sqlserver")) {
+			if (dbp.getDbserver().matches("sqlserver")) {
 				stmt.execute("CREATE FUNCTION roundTime(@time TIME) returns TIME AS BEGIN DECLARE @ret TIME; SELECT @ret = CAST(DATEADD(s,ROUND(DATEDIFF(second,0,@time)/5.0,0)*5,0) AS TIME) RETURN CONVERT(TIME,@ret, 108);  END;");
 				stmt.execute("CREATE VIEW vIperf3Stats as select batch_id,dbo.roundTime(time) AS roundedTime,transfer,bandwidth,pair from iperf3stat;");
 				stmt.execute("CREATE VIEW vDevStats as select batch_id,dbo.roundTime(time) AS roundedTime,ramUsage,cpuUsage from DevStat;");
 				stmt.execute("CREATE VIEW vControllerStats as select batch_id,dbo.roundTime(time) AS roundedTime,ramUsage,cpuUsage from ControllerStat;");
-				stmt.execute("CREATE VIEW vPortStats as select batch_id,dbo.roundTime(time) AS roundedTime,Name,PortNo,OutPackets, diffPackets from PortStat;");
+				stmt.execute("CREATE VIEW vPortStats as select batch_id,dbo.roundTime(time) AS roundedTime,Name,PortNo,OutPackets from PortStat;");
 				stmt.execute("CREATE VIEW vPingStats as select batch_id,dbo.roundTime(time) AS roundedTime,min(min) as min,avg(avg) as avg,max(max) as max from pingStat group by batch_id,dbo.roundTime(time);");
 				stmt.execute("CREATE VIEW vPingRepStats as select batch_id,dbo.roundTime(time) AS roundedTime,rtt, pingPair from pingRepStat;");
 				
@@ -82,10 +82,10 @@ public class DAO {
 				stmt.execute("CREATE VIEW vvPingRepStats as select *, CASE WHEN rtt<100 THEN 1 ELSE 0 END AS del50, CASE WHEN rtt<200 THEN 1 ELSE 0 END AS del100, CASE WHEN rtt<400 THEN 1 ELSE 0 END AS del200 from vPingRepStats a where roundedTime > (select dbo.bootTime(min(roundedTime),batch_id) from vPingRepStats b where b.batch_id = a.batch_id group by b.BATCH_ID) and roundedTime < (select dbo.endTime(max(roundedTime),batch_id) from vPingRepStats c where c.batch_id = a.batch_id  group by c.BATCH_ID);");
 				
 				stmt.execute("CREATE VIEW DelaySLA AS SELECT batch_id,min(rtt) as Min,max(rtt) as Max,avg(rtt) as Avg,count(*) as Total,sum(del50) as del50,sum(del100) as del100,sum(del200) as del200 FROM vvPingRepStats GROUP BY batch_id;");
-				stmt.execute("CREATE VIEW BandwidthSLA AS SELECT batch_id,min(bandwidth) as Min,max(bandwidth) as Max,avg(bandwidth) as Avg,count(*) as Total,sum(bw500) as bw500,sum(bw1000) as bw1000,sum(bw10000) as bw10000 FROM vvIperf3Stats GROUP BY batch_id;");
-				stmt.execute("CREATE VIEW CombinedSLAs AS SELECT vvPingRepStats.BATCH_ID,vvPingRepStats.roundedTime, CASE WHEN del50=bw10000 AND bw10000=1 THEN 1 ELSE 0 END AS HSLA, CASE WHEN del100=bw1000 AND bw1000=1 THEN 1 ELSE 0 END AS MSLA, CASE WHEN del200=bw500 AND bw500=1 THEN 1 ELSE 0 END AS LSLA from vvPingRepStats inner join vvIperf3Stats on vvPingRepStats.BATCH_ID = vvIperf3Stats.BATCH_ID and vvPingRepStats.roundedTime=vvIperf3Stats.roundedTime and vvIperf3Stats.pair=vvPingRepStats.pingPair;");
+				stmt.execute("CREATE VIEW BandwidthSLA AS SELECT batch_id,min(bandwidth) as Min,max(bandwidth) as Max,avg(bandwidth) as Avg,count(*) as Total,sum(bw500) as bw500,sum(bw1000) as bw1000,sum(bw2000) as bw2000 FROM vvIperf3Stats GROUP BY batch_id;");
+				stmt.execute("CREATE VIEW CombinedSLAs AS SELECT vvPingRepStats.BATCH_ID,vvPingRepStats.roundedTime, CASE WHEN del50=bw2000 AND bw2000=1 THEN 1 ELSE 0 END AS HSLA, CASE WHEN del100=bw1000 AND bw1000=1 THEN 1 ELSE 0 END AS MSLA, CASE WHEN del200=bw500 AND bw500=1 THEN 1 ELSE 0 END AS LSLA from vvPingRepStats inner join vvIperf3Stats on vvPingRepStats.BATCH_ID = vvIperf3Stats.BATCH_ID and vvPingRepStats.roundedTime=vvIperf3Stats.roundedTime and vvIperf3Stats.pair=vvPingRepStats.pingPair;");
 			}
-			if (new DBProperties().getDbserver().matches("maria")) {
+			if (dbp.getDbserver().matches("maria")) {
 				stmt.execute("CREATE VIEW vIperf3Stats as select batch_id,SEC_TO_TIME(ROUND(TIME_TO_SEC(time)/10)*10) AS roundedTime,transfer,bandwidth,pair from iperf3stat;");
 				stmt.execute("CREATE VIEW vDevStats as select batch_id,SEC_TO_TIME(ROUND(TIME_TO_SEC(time)/10)*10) AS roundedTime,ramUsage,cpuUsage from DevStat;");
 				stmt.execute("CREATE VIEW vControllerStats as select batch_id,SEC_TO_TIME(ROUND(TIME_TO_SEC(time)/10)*10) AS roundedTime,ramUsage,cpuUsage from ControllerStat;");
