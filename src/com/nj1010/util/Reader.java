@@ -96,8 +96,8 @@ public class Reader {
 				line = clean(line);
 				portStat = new PortStat();
 				portStat.setTime(time);
-				portStat.setPortNo(Integer.parseInt(line.split(":")[2].split(" ")[0].split("\\.")[1]));
-				portStat.setOutPackets(Long.parseLong(line.split(":")[3].trim()));
+				portStat.setPortNo(Integer.parseInt(line.split("=")[0].split("\\.")[10].trim()));
+				portStat.setOutPackets(Long.parseLong(line.split(":")[1].trim()));
 				Long old = packets.get(portStat.getPortNo());
 				if (old == null) old = (long) 0;
 				portStat.setDiffPackets(portStat.getOutPackets()-old);
@@ -143,16 +143,18 @@ public class Reader {
 		try {
 			br = new BufferedReader(new FileReader(f));            
 			while ((line = br.readLine()) != null) {
+				int ctrCpu = noCpu;
 				deviceStat = new DeviceStat();
 				line = clean(line);
 				time = sdf.parse(line);
 				line = br.readLine();
 				deviceStat.setTime(time);
-				deviceStat.setRamUsage(Integer.parseInt(line.split(":")[3].trim()));
+				deviceStat.setRamUsage(Integer.parseInt(line.split("=")[1].split(":")[1].trim()));
 				int cpu = 0;
-				while (noCpu>0) {
+				while (ctrCpu>0) {
 					line = br.readLine();
-					cpu += Integer.parseInt(line.split(":")[3].trim());
+					cpu += Integer.parseInt(line.split(":")[1].trim());
+					ctrCpu--;
 				}
 				deviceStat.setCpuUsage(cpu/noCpu);
 				al.add(deviceStat);
@@ -257,9 +259,9 @@ public class Reader {
 			br = new BufferedReader(new FileReader(f));
 			line = br.readLine();
 			while ((line = br.readLine()) != null) {
-				//cycle+=line;
-				if (line.matches("1.3.6.1.2.1.25.3.3.1.2")) noCpu++;
-				if (line.matches("[0-9][0-9]:[0-9][0-9]:[0-9]"))
+				//cycle+=line+"\n";
+				if (line.contains("3.6.1.2.1.25.3.3.1.2")) noCpu++;
+				if (line.matches("[0-9][0-9]:[0-9][0-9]:[0-9][0-9]")) 
 					break;
 			}
 		}catch (Exception e){
