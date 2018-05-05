@@ -137,7 +137,7 @@ public class Reader {
 		return al;
 	}
 	
-	public ArrayList<DeviceStat> readDevStats(String f) {
+	public ArrayList<DeviceStat> readDevStats(String f,int noCpu) {
 		DeviceStat deviceStat;
 		ArrayList<DeviceStat> al = new  ArrayList<DeviceStat>();
 		try {
@@ -149,11 +149,12 @@ public class Reader {
 				line = br.readLine();
 				deviceStat.setTime(time);
 				deviceStat.setRamUsage(Integer.parseInt(line.split(":")[3].trim()));
-				line = br.readLine();
-				int cpu = Integer.parseInt(line.split(":")[3].trim());
-				line = br.readLine();
-				cpu += Integer.parseInt(line.split(":")[3].trim());
-				deviceStat.setCpuUsage(cpu/2);
+				int cpu = 0;
+				while (noCpu>0) {
+					line = br.readLine();
+					cpu += Integer.parseInt(line.split(":")[3].trim());
+				}
+				deviceStat.setCpuUsage(cpu/noCpu);
 				al.add(deviceStat);
 				}
 		}
@@ -248,5 +249,22 @@ public class Reader {
 			System.out.println(f + " "  + line);
 			e.printStackTrace();}
 		return ans;
+	}
+	public int getNoCpu(String f) {
+		//String cycle = ""; 
+		int noCpu=0;
+		try {
+			br = new BufferedReader(new FileReader(f));
+			line = br.readLine();
+			while ((line = br.readLine()) != null) {
+				//cycle+=line;
+				if (line.matches("1.3.6.1.2.1.25.3.3.1.2")) noCpu++;
+				if (line.matches("[0-9][0-9]:[0-9][0-9]:[0-9]"))
+					break;
+			}
+		}catch (Exception e){
+			System.out.println(f + " "  + line);
+			e.printStackTrace();}
+		return noCpu;
 	}
 }

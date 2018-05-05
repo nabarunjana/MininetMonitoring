@@ -127,10 +127,12 @@ public class Main {
 					al.add(iperf3);
 				}
 				else if(fileEntry.getName().contains("DevStat")) {
-					devStats = r.readDevStats(fileEntry.getAbsolutePath());
+					int noCpu = r.getNoCpu("DevStats.txt");
+					devStats = r.readDevStats(fileEntry.getAbsolutePath(),noCpu);
 				}
 				else if(fileEntry.getName().contains("ControllerStat")) {
-					controllerStat = r.readDevStats(fileEntry.getAbsolutePath());
+					int noCpu = r.getNoCpu("ControllerStats.txt");
+					controllerStat = r.readDevStats(fileEntry.getAbsolutePath(),noCpu);
 				}
 				else if(fileEntry.getName().contains("IfOutStats")) {
 					portStat = r.readIfOutStats(fileEntry.getAbsolutePath());
