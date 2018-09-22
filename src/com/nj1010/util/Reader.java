@@ -20,7 +20,7 @@ public class Reader {
 
 	@SuppressWarnings("serial")
 	private static HashMap<String, Double> mux = new HashMap<String, Double>() 
-	{{put("G", 1e9);put("M",1e6);put("K",1e3);put("",1e1);}};
+	{{put("G", 1e9);put("M",1e6);put("K",1e3);put("B",1e1);}};
 	private String clean(String text) {
 		return text.trim().replaceAll(" +", " ");
 	}
