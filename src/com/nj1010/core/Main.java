@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.zip.ZipEntry;
@@ -135,8 +136,8 @@ public class Main {
 					controllerStat = r.readDevStats(fileEntry.getAbsolutePath(),noCpu);
 				}
 				else if(fileEntry.getName().contains("IfOutStats")) {
-					portStat = r.readIfOutStats(fileEntry.getAbsolutePath());
-					portStat = r.readPortNumbers("ports.txt", portStat);
+					HashMap<Integer, String> hmap = r.readPortNumbers("ports.txt");
+					portStat = r.readIfOutStats(fileEntry.getAbsolutePath(),hmap);
 				}
 				else if(fileEntry.getName().contains("ping.txt") && fileEntry.getName().contains("-")) {
 					ping = r.readRepPingStats(fileEntry.getAbsolutePath());
@@ -154,7 +155,7 @@ public class Main {
 				}
 	        }
 	    }
-	    int rowsDevStats = 0,rowsControllerStats = 0,rowsPortStats = 0,rowsPingStats = 0,rowsPingTotal=0, rowsIperf3Total=0,idx=0,rowsCoefficients = 0;
+		int rowsDevStats = 0,rowsControllerStats = 0,rowsPortStats = 0,rowsPingStats = 0,rowsPingTotal=0, rowsIperf3Total=0,idx=0,rowsCoefficients = 0;
 	    int[] rowsIperf3 = new int[pairs.size()];
 	    int[] rowsPing = new int[pingPairs.size()];
 	    if (devStats.size()>0) rowsDevStats = dao.insertDevStats(devStats);

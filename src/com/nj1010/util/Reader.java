@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import com.nj1010.bean.*;
 
 public class Reader {
@@ -18,15 +17,10 @@ public class Reader {
 	private static int dropped =0;
 	
 	public static int getDropped() {return dropped;}
-	private double getMultiplier(String data) {
-		switch (data) {
-			case "G": multiplier = 1e9; break;
-			case "M": multiplier = 1e6; break;
-			case "K": multiplier = 1e3; break;
-			default: multiplier = 1; break;
-		}
-		return multiplier;
-	}
+
+	@SuppressWarnings("serial")
+	private static HashMap<String, Double> mux = new HashMap<String, Double>() 
+	{{put("G", 1e9);put("M",1e6);put("K",1e3);put("",1e1);}};
 	private String clean(String text) {
 		return text.trim().replaceAll(" +", " ");
 	}
@@ -64,15 +58,14 @@ public class Reader {
 				}
 				line=clean(line);	
 				data = line.split("sec")[1].trim();
-				multiplier = getMultiplier(data.split(" ")[1].substring(0,1));
+				multiplier = mux.get(data.split(" ")[1].substring(0,1));
 				transfer = Double.parseDouble(data.split(" ")[0]) * multiplier;
-				multiplier = getMultiplier(data.split(" ")[3].substring(0,1));
+				multiplier = mux.get(data.split(" ")[3].substring(0,1));
 				bandwidth = Double.parseDouble(data.split(" ")[2]) * multiplier;
 				
 				iperf3stat.setTransfer((int)transfer);
 				iperf3stat.setBandwidth((int)bandwidth);
 				al.add(iperf3stat);
-
 			}
 		}
 		catch (Exception e){
@@ -82,7 +75,7 @@ public class Reader {
 
 	}
 
-	public ArrayList<PortStat> readIfOutStats(String f) {
+	public ArrayList<PortStat> readIfOutStats(String f, HashMap<Integer, String> hmap) {
 		PortStat portStat;
 		ArrayList<PortStat> al = new  ArrayList<PortStat>();
 		HashMap<Integer,Long> packets = new HashMap<Integer,Long>();
@@ -97,9 +90,10 @@ public class Reader {
 				portStat = new PortStat();
 				portStat.setTime(time);
 				portStat.setPortNo(Integer.parseInt(line.split("=")[0].split("\\.")[10].trim()));
+				portStat.setName(hmap.get(portStat.getPortNo()));
 				portStat.setOutPackets(Long.parseLong(line.split(":")[1].trim()));
 				Long old = packets.get(portStat.getPortNo());
-				if (old == null) old = (long) 0;
+				if (old == null) old = 0L;
 				portStat.setDiffPackets(portStat.getOutPackets()-old);
 				if(!packets.containsKey(portStat.getPortNo()))
 					packets.put(portStat.getPortNo(),portStat.getOutPackets());
@@ -113,9 +107,8 @@ public class Reader {
 			e.printStackTrace();}
 		return al;
 	}
-	public ArrayList<PortStat> readPortNumbers(String f,ArrayList<PortStat> al) {
-		PortStat portStat;
-		Iterator<PortStat> it = al.iterator();
+	
+	public HashMap<Integer, String> readPortNumbers(String f) {
 		HashMap<Integer, String> hmap = new HashMap<Integer, String>();
 		try {
 			br = new BufferedReader(new FileReader(f));
@@ -125,16 +118,12 @@ public class Reader {
 					hmap.put(Integer.parseInt(line.split(":")[0].trim()), line.split(":")[1]);
 				}
 			}
-			while(it.hasNext()) {
-				portStat = it.next();
-				portStat.setName(hmap.get(portStat.getPortNo()));
-			}
 		}
 		catch (FileNotFoundException e){System.out.println("Ports.txt not found");}
 		catch (Exception e){
 			System.out.println(f + " "  + line);
 			e.printStackTrace();}
-		return al;
+		return hmap;
 	}
 	
 	public ArrayList<DeviceStat> readDevStats(String f,int noCpu) {

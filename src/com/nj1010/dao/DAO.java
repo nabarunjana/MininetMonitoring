@@ -107,16 +107,17 @@ public class DAO {
 		Connection con = getConnection();
 		Iterator<DeviceStat> it = devStats.iterator();
 		try {
+			PreparedStatement stmt = con.prepareStatement(
+					"INSERT INTO DevStat VALUES(?,?,?,?)");
 			while(it.hasNext()) {
 				DeviceStat obj = it.next();
-				PreparedStatement stmt = con.prepareStatement(
-						"INSERT INTO DevStat VALUES(?,?,?,?)");
 				stmt.setLong(1, BATCH_ID);
 				stmt.setTime(2, new Time(obj.getTime().getTime()));
 				stmt.setInt(3, obj.getRamUsage());
 				stmt.setInt(4, obj.getCpuUsage());
-				rows += stmt.executeUpdate();
+				stmt.addBatch();
 			}
+			rows += sum(stmt.executeBatch());
 		} catch (SQLException e) {e.printStackTrace();}
 		finally {try {con.close();} catch (SQLException e) {e.printStackTrace();}}
 		return rows;
@@ -126,16 +127,17 @@ public class DAO {
 		Connection con = getConnection();
 		Iterator<DeviceStat> it = devStats.iterator();
 		try {
+			PreparedStatement stmt = con.prepareStatement(
+				"INSERT INTO ControllerStat VALUES(?,?,?,?)");
 			while(it.hasNext()) {
 				DeviceStat obj = it.next();
-				PreparedStatement stmt = con.prepareStatement(
-						"INSERT INTO ControllerStat VALUES(?,?,?,?)");
 				stmt.setLong(1, BATCH_ID);
 				stmt.setTime(2, new Time(obj.getTime().getTime()));
 				stmt.setInt(3, obj.getRamUsage());
 				stmt.setInt(4, obj.getCpuUsage());
-				rows += stmt.executeUpdate();
+				stmt.addBatch();
 			}
+			rows += sum(stmt.executeBatch());
 		} catch (SQLException e) {e.printStackTrace();}
 		finally {try {con.close();} catch (SQLException e) {e.printStackTrace();}}
 		return rows;
@@ -145,38 +147,46 @@ public class DAO {
 		Connection con = getConnection();
 		Iterator<PortStat> it = portStats.iterator();
 		try {
+			PreparedStatement stmt = con.prepareStatement(
+					"INSERT INTO portStat VALUES(?,?,?,?,?,?)");
 			while(it.hasNext()) {
 				PortStat obj = it.next();
-				PreparedStatement stmt = con.prepareStatement(
-						"INSERT INTO portStat VALUES(?,?,?,?,?,?)");
 				stmt.setLong(1, BATCH_ID);
 				stmt.setTime(2, new Time(obj.getTime().getTime()));
 				stmt.setString(3, obj.getName());
 				stmt.setInt(4, obj.getPortNo());
 				stmt.setLong(5, obj.getOutPackets());
 				stmt.setLong(6, obj.getDiffPackets());
-				rows += stmt.executeUpdate();
+				stmt.addBatch();
 			}
+			rows += sum(stmt.executeBatch());
 		} catch (SQLException e) {e.printStackTrace();}
 		finally {try {con.close();} catch (SQLException e) {e.printStackTrace();}}
 		return rows;
+	}
+	private int sum(int[] executeBatch) {
+		int sum = 0;
+		for(int number : executeBatch)
+			sum += number;
+		return sum;
 	}
 	public int insertIperf3Stats(ArrayList<Iperf3Stat> iperf3Stats,String pair) {
 		int rows = 0;
 		Connection con = getConnection();
 		Iterator<Iperf3Stat> it = iperf3Stats.iterator();
 		try {
+			PreparedStatement stmt = con.prepareStatement(
+					"INSERT INTO iperf3Stat VALUES(?,?,?,?,?)");
 			while(it.hasNext()) {
 				Iperf3Stat obj = it.next();
-				PreparedStatement stmt = con.prepareStatement(
-						"INSERT INTO iperf3Stat VALUES(?,?,?,?,?)");
 				stmt.setLong(1, BATCH_ID);
 				stmt.setTime(2, new Time(obj.getTime().getTime()));
 				stmt.setInt(3, obj.getTransfer());
 				stmt.setInt(4, obj.getBandwidth());
 				stmt.setString(5, pair);
-				rows += stmt.executeUpdate();
+				stmt.addBatch();
 			}
+			rows += sum(stmt.executeBatch());
 		} catch (SQLException e) {e.printStackTrace();}
 		finally {try {con.close();} catch (SQLException e) {e.printStackTrace();}}
 		return rows;
@@ -206,17 +216,18 @@ public class DAO {
 		Connection con = getConnection();
 		Iterator<RTT> it = rtt.iterator();
 		try {
+			PreparedStatement stmt = con.prepareStatement(
+					"INSERT INTO pingStat VALUES(?,?,?,?,?)");
 			while(it.hasNext()) {
 				RTT obj = it.next();
-				PreparedStatement stmt = con.prepareStatement(
-						"INSERT INTO pingStat VALUES(?,?,?,?,?)");
 				stmt.setLong(1, BATCH_ID);
 				stmt.setTime(2, new Time(obj.getTime().getTime()));
 				stmt.setDouble(3, obj.getMin());
 				stmt.setDouble(4, obj.getAvg());
 				stmt.setDouble(5, obj.getMax());
-				rows += stmt.executeUpdate();
+				stmt.addBatch();
 			}
+			rows += sum(stmt.executeBatch());
 		} catch (SQLException e) {e.printStackTrace();}
 		finally {try {con.close();} catch (SQLException e) {e.printStackTrace();}}
 		return rows;
@@ -226,16 +237,17 @@ public class DAO {
 		Connection con = getConnection();
 		Iterator<Ping> it = pingRep.iterator();
 		try {
+			PreparedStatement stmt = con.prepareStatement(
+					"INSERT INTO pingRepStat VALUES(?,?,?,?)");
 			while(it.hasNext()) {
 				Ping obj = it.next();
-				PreparedStatement stmt = con.prepareStatement(
-						"INSERT INTO pingRepStat VALUES(?,?,?,?)");
 				stmt.setLong(1, BATCH_ID);
 				stmt.setTime(2, new Time(obj.getTime().getTime()));
 				stmt.setDouble(3, obj.getRtt());
 				stmt.setString(4, pingPair);
-				rows += stmt.executeUpdate();
+				stmt.addBatch();
 			}
+			rows += sum(stmt.executeBatch());
 		} catch (SQLException e) {e.printStackTrace();}
 		finally {try {con.close();} catch (SQLException e) {e.printStackTrace();}}
 		return rows;
@@ -291,15 +303,16 @@ public class DAO {
 		Connection con = getConnection();
 		Iterator<Coefficient> it = coefs.iterator();
 		try {
+			PreparedStatement stmt = con.prepareStatement(
+					"INSERT INTO coefficients VALUES(?,?,?)");
 			while(it.hasNext()) {
 				Coefficient obj = it.next();
-				PreparedStatement stmt = con.prepareStatement(
-						"INSERT INTO coefficients VALUES(?,?,?)");
 				stmt.setLong(1, BATCH_ID);
 				stmt.setInt(2, obj.getSerialNumber());
 				stmt.setDouble(3, obj.getCoefficient());
-				rows += stmt.executeUpdate();
+				stmt.addBatch();
 			}
+			rows += sum(stmt.executeBatch());
 		} catch (SQLException e) {e.printStackTrace();}
 		finally {try {con.close();} catch (SQLException e) {e.printStackTrace();}}
 		return rows;
